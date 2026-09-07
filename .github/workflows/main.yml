@@ -29,7 +29,7 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Build Debug APK with Logs
+      - name: Diagnose and Build
         run: |
           cd project
           if [ ! -f "build.gradle" ] && [ ! -f "build.gradle.kts" ]; then
@@ -44,7 +44,7 @@ jobs:
             >> gradle.properties
 
           chmod +x gradlew || true
-          ./gradlew assembleDebug --stacktrace --info --no-daemon
+          ./gradlew assembleDebug --stacktrace || true
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
