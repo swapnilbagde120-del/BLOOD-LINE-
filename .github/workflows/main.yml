@@ -39,3 +39,7 @@ jobs:
         with:
           name: BloodLine-debug-apk
           path: '${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/*.apk'
+name: Fix AndroidX
+        run: |
+          echo "android.useAndroidX=true" >> ${{ env.PROJECT_DIR }}/gradle.properties
+          echo "android.enableJetifier=true" >> ${{ env.PROJECT_DIR }}/gradle.properties
