@@ -26,12 +26,15 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
 
-      - name: Build Debug APK
+      - name: Build Debug APK with Logs
         run: |
           cd project
           if [ ! -f "build.gradle" ] && [ ! -f "build.gradle.kts" ]; then
-            cd $(find . -maxdepth 2 -name "build.gradle*" -o -name "settings.gradle*" | head -n 1 | xargs dirname)
+            TARGET_DIR=$(find . -maxdepth 2 -name "build.gradle*" -o -name "settings.gradle*" | head -n 1 | xargs dirname)
+            cd "$TARGET_DIR"
           fi
           
           printf '%s\n' \
@@ -40,9 +43,8 @@ jobs:
             'org.gradle.jvmargs=-Xmx3072m' \
             >> gradle.properties
 
-          gradle wrapper
-          chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          chmod +x gradlew || true
+          ./gradlew assembleDebug --stacktrace --info --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
