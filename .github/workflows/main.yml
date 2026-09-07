@@ -2,6 +2,8 @@ name: Build BloodLine APK
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ main ]
 
 jobs:
   build:
@@ -11,39 +13,47 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Extract BloodLine project
+      - name: Extract Project ZIP
         run: |
+          mkdir -p project
           unzip -o BloodLine-World-Class.zip -d project
-
-      - name: Find project folder
-        run: |
-          SETTINGS=$(find project -name settings.gradle.kts -print -quit)
-          echo "SETTINGS=$SETTINGS"
-          echo "PROJECT_DIR=$(dirname "$SETTINGS")" >> "$GITHUB_ENV"
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
+          distribution: 'temurin'
           java-version: '17'
 
-      - name: Set up Gradle
+      - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build APK
-        working-directory: ${{ env.PROJECT_DIR }}
-        run: gradle --no-daemon assembleDebug
+      - name: Setup Gradle Properties
+        working-directory: project
+        run: |
+          printf '%s\n' \
+            'android.useAndroidX=true' \
+            'android.enableJetifier=true' \
+            'org.gradle.jvmargs=-Xmx2048m' \
+            >> gradle.properties
+
+      - name: Make Gradlew Executable
+        working-directory: project
+        run: |
+          if [ -f "./gradlew" ]; then
+            chmod +x gradlew
+          fi
+
+      - name: Build Debug APK
+        working-directory: project
+        run: |
+          if [ -f "./gradlew" ]; then
+            ./gradlew assembleDebug --stacktrace --no-daemon
+          else
+            gradle assembleDebug --stacktrace --no-daemon
+          fi
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: BloodLine-debug-apk
-           with:
-          name: BloodLine-debug-apk
-          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/*.apk   
-          - name: Fix AndroidX
-          run: |
-          echo "android.useAndroidX=true" >> $
-          {{ env.PROJECT_DIR }}/gradle.properties
-          echo "android.enableJetifier=true" >> $
-          {{ env.PROJECT_DIR }}/gradle.properties
+          path: "project/**/build/outputs/apk/debug/*.apk"
