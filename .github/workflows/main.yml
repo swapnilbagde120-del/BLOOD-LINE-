@@ -56,4 +56,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: BloodLine-debug-apk
-          path: "project/**/build/outputs/apk/debug/*.
+          
+        path: "**/outputs/apk/debug/*.apk"
+          if-no-files-found: error
