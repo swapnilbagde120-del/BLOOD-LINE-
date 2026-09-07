@@ -18,26 +18,25 @@ jobs:
           mkdir -p project
           unzip -o BloodLine-World-Class.zip -d project
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
-      - name: Build Debug APK
+      - name: Configure and Generate Wrapper
         run: |
           cd project
-          # Navigate into extracted project root if nested
           BUILD_FILE=$(find . -name "build.gradle*" | head -n 1)
           if [ -n "$BUILD_FILE" ]; then
             cd $(dirname "$BUILD_FILE")
           fi
-
+          
           printf '%s\n' \
             'android.useAndroidX=true' \
             'android.enableJetifier=true' \
@@ -45,8 +44,17 @@ jobs:
             >> gradle.properties
 
           gradle wrapper
+
+      - name: Build Debug APK
+        run: |
+          cd project
+          BUILD_FILE=$(find . -name "build.gradle*" | head -n 1)
+          if [ -n "$BUILD_FILE" ]; then
+            cd $(dirname "$BUILD_FILE")
+          fi
+          
           chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace --no-daemon
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
