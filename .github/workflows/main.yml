@@ -1,0 +1,41 @@
+name: Build BloodLine APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract BloodLine project
+        run: |
+          unzip -o BloodLine-World-Class.zip -d project
+
+      - name: Find project folder
+        run: |
+          SETTINGS=$(find project -name settings.gradle.kts -print -quit)
+          echo "SETTINGS=$SETTINGS"
+          echo "PROJECT_DIR=$(dirname "$SETTINGS")" >> "$GITHUB_ENV"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build APK
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: gradle --no-daemon assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: BloodLine-debug-apk
+          path: '${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/*.apk'
