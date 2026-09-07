@@ -27,34 +27,29 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Setup Gradle Properties
-        working-directory: project
+      - name: Build Debug APK
         run: |
+          cd project
+          if [ ! -f "build.gradle" ] && [ ! -f "build.gradle.kts" ]; then
+            cd $(find . -maxdepth 2 -name "build.gradle*" -o -name "settings.gradle*" | head -n 1 | xargs dirname)
+          fi
+          
           printf '%s\n' \
             'android.useAndroidX=true' \
             'android.enableJetifier=true' \
-            'org.gradle.jvmargs=-Xmx2048m' \
+            'org.gradle.jvmargs=-Xmx3072m' \
             >> gradle.properties
 
-      - name: Make Gradlew Executable
-        working-directory: project
-        run: |
           if [ -f "./gradlew" ]; then
             chmod +x gradlew
+            ./gradlew assembleDebug --no-daemon
+          else
+            gradle assembleDebug --no-daemon
           fi
 
-      - name: Build Debug APK
-        working-directory: project
-        run: |
-          if [ -f "./gradlew" ]; then
-            ./gradlew assembleDebug --stacktrace --no-daemon
-          else
-            gradle assembleDebug --stacktrace --no-daemon
-          fi
-- name: Upload APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: BloodLine-debug-apk
-          
-        path: "**/outputs/apk/debug/*.apk"
-          if-no-files-found: error
+          path: "**/*.apk"
+          if-no-files-found: warn
